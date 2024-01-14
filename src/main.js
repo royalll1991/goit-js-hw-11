@@ -1,29 +1,43 @@
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
-
+import SimpleLightbox from "simplelightbox";
+import "simplelightbox/dist/simple-lightbox.min.css";
 
 const activeForm = document.querySelector(`.form`);
 const API_KEY = `41787862-84986491f6cfdcc41b6404efb`;
+const loaderContainer = document.querySelector('.loader-container');
 
+const getImage = (query = "") => {
+    return fetch(`https://pixabay.com/api/?key=${API_KEY}&q=${query}&image_type=photo&orientation=horizontal&safesearch=true`)
+    .then((response) => {
+        hideLoader();
+        if(response.ok) {
+        return response.json();}
+        else {
+            throw new Error('No hits');
+        }
+    });
+}
+
+function showLoader() {
+    loaderContainer.style.display = 'block';
+  }
+  function hideLoader() {
+    loaderContainer.style.display = 'none';
+  }
+
+  function clearSearchResults() {
+    gallery.innerHTML = "";
+}
 
 activeForm.addEventListener("submit", (event) => {
     event.preventDefault();
 
     const query = event.target.elements.query.value.trim();
 
-    const getImage = (query = "") => {
-        return fetch(`https://pixabay.com/api/?key=${API_KEY}&q=${query}&image_type=photo&orientation=horizontal&safesearch=true`)
-        .then((response) => {
-            if(response.ok) {
-            return response.json();}
-            else {
-                throw new Error('No hits');
-            }
-        });
-    }
-    
+showLoader();
 
-    getImage(query)
+       getImage(query)
     .then(({hits}) => {
         if (hits.length === 0) {
             iziToast.show({
@@ -32,8 +46,9 @@ activeForm.addEventListener("submit", (event) => {
   position: "topRight",  
             });
         } else {
-            renderImage(query);
+            renderImages(hits);
         }
+        getImage.reset();
     })
     .catch(error => {
         console.error(error);
@@ -41,7 +56,17 @@ activeForm.addEventListener("submit", (event) => {
     
 })
 
-const imageHTML = ({webformatURL, largeImageURL, tags, likes, views, comments, downloads}) => `
+
+const gallery = document.querySelector(`.gallery`);
+
+const lightbox = new SimpleLightbox('.gallery a', {
+    captionDelay: 250,
+    captionsData: 'alt',
+    close: true,
+  });
+
+function renderImages(hits) {
+    const imageHTML = hits.map(({webformatURL, largeImageURL, tags, likes, views, comments, downloads}) => `
 <a class="gallery-link" href="${largeImageURL}">
 <img
     class="gallery-image"
@@ -66,11 +91,8 @@ const imageHTML = ({webformatURL, largeImageURL, tags, likes, views, comments, d
       <p class="info-value">${downloads}</p>
   </li>
 </ul>
-</a> `
-
-const gallery = document.querySelector(`.gallery`);
-function renderImage(query){
-    getImage(query)
-    .then(image => gallery.insertAdjacentHTML("afterbegin",imageHTML))
-    .catch(error => console.error(error))
+</a> `).join(``)
+    clearSearchResults();
+     gallery.insertAdjacentHTML("afterbegin",imageHTML);
+     lightbox.refresh();
 }
