@@ -26,9 +26,7 @@ function showLoader() {
     loaderContainer.style.display = 'none';
   }
 
-  function clearSearchResults() {
-    gallery.innerHTML = "";
-}
+  
 
 activeForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -36,6 +34,8 @@ activeForm.addEventListener("submit", (event) => {
     const query = event.target.elements.query.value.trim();
 
 showLoader();
+
+clearSearchResults();
 
        getImage(query)
     .then(({hits}) => {
@@ -48,16 +48,25 @@ showLoader();
         } else {
             renderImages(hits);
         }
-        getImage.reset();
+        event.target.reset();
     })
     .catch(error => {
-        console.error(error);
+        iziToast.show({
+            message: `${error}`,
+            color: "red",
+position: "topRight",  
+        });
     });
     
 })
 
 
 const gallery = document.querySelector(`.gallery`);
+
+function clearSearchResults() {
+    gallery.innerHTML = "";
+    
+}
 
 const lightbox = new SimpleLightbox('.gallery a', {
     captionDelay: 250,
@@ -92,7 +101,7 @@ function renderImages(hits) {
   </li>
 </ul>
 </a> `).join(``)
-    clearSearchResults();
+    
      gallery.insertAdjacentHTML("afterbegin",imageHTML);
      lightbox.refresh();
 }
