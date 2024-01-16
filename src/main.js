@@ -35,6 +35,7 @@ activeForm.addEventListener("submit", (event) => {
 
 showLoader();
 
+
 clearSearchResults();
 
        getImage(query)
